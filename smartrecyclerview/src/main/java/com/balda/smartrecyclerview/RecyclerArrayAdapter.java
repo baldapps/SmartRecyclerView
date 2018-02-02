@@ -22,6 +22,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
+import android.widget.Filter;
+import android.widget.Filterable;
 
 import com.balda.smartrecyclerview.touchhelper.ItemTouchHelperAdapter;
 
@@ -39,28 +41,41 @@ import java.util.List;
  */
 @SuppressWarnings("unused")
 public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends RecyclerView.Adapter<VH>
-        implements DragListener, ItemTouchHelperAdapter {
+        implements DragListener, ItemTouchHelperAdapter, Filterable {
 
+    /**
+     * Lock used to modify the content of {@link #objects}. Any write operation
+     * performed on the array should be synchronized on this lock. This lock is also
+     * used by the filter (see {@link #getFilter()} to make a synchronized copy of
+     * the original array of data.
+     */
+    protected final Object lock = new Object();
     private Context context;
-    protected ArrayList<T> mObjects;
+    protected List<T> objects;
     @Nullable
     protected DragListener dragListener;
     @Nullable
     private CheckableList checkableList;
+    /**
+     * A copy of the original objects array, initialized from and then used instead as soon as
+     * the filter ArrayFilter is used. objects will then only contain the filtered values.
+     */
+    protected ArrayList<T> originalValues;
+    protected ArrayFilter filter;
 
-    public RecyclerArrayAdapter(@NonNull Context c, final ArrayList<T> objects) {
-        mObjects = objects;
+    public RecyclerArrayAdapter(@NonNull Context c, final List<T> objects) {
+        this.objects = objects;
         context = c;
     }
 
     public RecyclerArrayAdapter(@NonNull Context c, final T[] objects) {
-        mObjects = new ArrayList<>(Arrays.asList(objects));
+        this.objects = new ArrayList<>(Arrays.asList(objects));
         context = c;
     }
 
     public RecyclerArrayAdapter(@NonNull Context c) {
         context = c;
-        mObjects = new ArrayList<>();
+        objects = new ArrayList<>();
     }
 
     @Nullable
@@ -89,18 +104,24 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
     }
 
     public void add(final T object) {
-        mObjects.add(object);
+        synchronized (lock) {
+            objects.add(object);
+        }
         notifyItemInserted(getItemCount() - 1);
     }
 
     public void add(final Collection<? extends T> collection) {
-        mObjects.addAll(collection);
+        synchronized (lock) {
+            objects.addAll(collection);
+        }
         notifyItemInserted(getItemCount() - collection.size());
     }
 
     public void clear() {
         final int size = getItemCount();
-        mObjects.clear();
+        synchronized (lock) {
+            objects.clear();
+        }
         notifyItemRangeRemoved(0, size);
     }
 
@@ -111,10 +132,12 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
      * @param collection The new dataset
      */
     public void refresh(List<T> collection) {
-        final DiffUtil.Callback diffCallback = getDiffUtil(mObjects, collection);
+        final DiffUtil.Callback diffCallback = getDiffUtil(objects, collection);
         final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
-        mObjects.clear();
-        mObjects.addAll(collection);
+        synchronized (lock) {
+            objects.clear();
+            objects.addAll(collection);
+        }
         diffResult.dispatchUpdatesTo(this);
     }
 
@@ -124,17 +147,17 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
      * @param collection The new list
      * @return A DiffUtil.Callback object
      */
-    protected DiffUtil.Callback getDiffUtil(ArrayList<T> objects, List<T> collection) {
+    protected DiffUtil.Callback getDiffUtil(List<T> objects, List<T> collection) {
         return new DiffCallback(objects, collection);
     }
 
     @Override
     public int getItemCount() {
-        return mObjects.size();
+        return objects.size();
     }
 
     public T getItem(final int position) {
-        return mObjects.get(position);
+        return objects.get(position);
     }
 
     public long getItemId(final int position) {
@@ -142,23 +165,29 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
     }
 
     public int getPosition(final T item) {
-        return mObjects.indexOf(item);
+        return objects.indexOf(item);
     }
 
     public void insert(final T object, int index) {
-        mObjects.add(index, object);
+        synchronized (lock) {
+            objects.add(index, object);
+        }
         notifyItemInserted(index);
     }
 
     public void remove(T object) {
         final int position = getPosition(object);
-        mObjects.remove(object);
+        synchronized (lock) {
+            objects.remove(object);
+        }
         notifyItemRemoved(position);
-        notifyItemRangeChanged(position, mObjects.size());
+        notifyItemRangeChanged(position, objects.size());
     }
 
     public void sort(Comparator<? super T> comparator) {
-        Collections.sort(mObjects, comparator);
+        synchronized (lock) {
+            Collections.sort(objects, comparator);
+        }
         notifyItemRangeChanged(0, getItemCount());
     }
 
@@ -166,11 +195,11 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
     public void onItemMove(int fromPosition, int toPosition) {
         if (fromPosition < toPosition) {
             for (int i = fromPosition; i < toPosition; i++) {
-                Collections.swap(mObjects, i, i + 1);
+                Collections.swap(objects, i, i + 1);
             }
         } else {
             for (int i = fromPosition; i > toPosition; i--) {
-                Collections.swap(mObjects, i, i - 1);
+                Collections.swap(objects, i, i - 1);
             }
         }
         notifyItemMoved(fromPosition, toPosition);
@@ -178,7 +207,7 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
 
     @Override
     public void onItemDismiss(int position) {
-        mObjects.remove(position);
+        objects.remove(position);
         notifyItemRemoved(position);
     }
 
@@ -197,6 +226,78 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
     public void onBindViewHolder(VH holder, int position, List<Object> payloads) {
         super.onBindViewHolder(holder, position, payloads);
         holder.bindChoiceState(position);
+    }
+
+    @Override
+    public Filter getFilter() {
+        if (filter == null) {
+            filter = new ArrayFilter();
+        }
+        return filter;
+    }
+
+    /**
+     * <p>An array filter constrains the content of the array adapter with
+     * a prefix. Each item that does not start with the supplied prefix
+     * is removed from the list.</p>
+     */
+    protected class ArrayFilter extends Filter {
+        @Override
+        protected FilterResults performFiltering(CharSequence prefix) {
+            final FilterResults results = new FilterResults();
+
+            if (originalValues == null) {
+                synchronized (lock) {
+                    originalValues = new ArrayList<>(objects);
+                }
+            }
+
+            if (prefix == null || prefix.length() == 0) {
+                final ArrayList<T> list;
+                synchronized (lock) {
+                    list = new ArrayList<>(originalValues);
+                }
+                results.values = list;
+                results.count = list.size();
+            } else {
+                final String prefixString = prefix.toString().toLowerCase();
+
+                final ArrayList<T> values;
+                synchronized (lock) {
+                    values = new ArrayList<>(originalValues);
+                }
+
+                final int count = values.size();
+                final ArrayList<T> newValues = new ArrayList<>();
+
+                for (int i = 0; i < count; i++) {
+                    final T value = values.get(i);
+                    final String valueText = value.toString().toLowerCase();
+                    // First match against the whole, non-splitted value
+                    if (valueText.startsWith(prefixString)) {
+                        newValues.add(value);
+                    } else {
+                        final String[] words = valueText.split(" ");
+                        for (String word : words) {
+                            if (word.startsWith(prefixString)) {
+                                newValues.add(value);
+                                break;
+                            }
+                        }
+                    }
+                }
+                results.values = newValues;
+                results.count = newValues.size();
+            }
+            return results;
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            //noinspection unchecked
+            objects = (List<T>) results.values;
+            notifyDataSetChanged();
+        }
     }
 
     /**
