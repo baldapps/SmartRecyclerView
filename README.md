@@ -6,10 +6,10 @@ Smart Recycler View is an android library project to help developers to use the 
 * com.android.support:recyclerview-v7 (version 27.0.2 or above)
 
 ## Set up Instructions
-Set up the project dependencies. To use this library in your project, you have two options:
+Set up the project dependencies. To use this library in your project:
 
 (1) Use the GitHub source and include that as a module dependency by following these steps:
- * Clone this library into a project named CastCompanionLibrary, parallel to your own application project:
+ * Clone this library into a project named SmartRecyclerView, parallel to your own application project:
 ```shell
 git clone https://github.com/baldapps/SmartRecyclerView.git
 ```
