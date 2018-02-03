@@ -34,25 +34,19 @@ public class TouchHelperCallback extends ItemTouchHelper.SimpleCallback {
     }
 
     public TouchHelperCallback(ItemTouchHelperAdapter adapter) {
-        super(0, 0);
+        super(ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.START | ItemTouchHelper.END);
         this.adapter = adapter;
+        dragEnabled = true;
+    }
+
+    public TouchHelperCallback(ItemTouchHelperAdapter adapter, int dragsFlags, int swipeFlags) {
+        super(dragsFlags, swipeFlags);
+        this.adapter = adapter;
+        dragEnabled = dragsFlags != 0;
     }
 
     /**
-     * By default the helper allows swipe and drag up/down. Override if needed.
-     * @param recyclerView The view
-     * @param viewHolder The view holder
-     * @return Movement flags
-     */
-    @Override
-    public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
-        int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
-        int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
-        return makeMovementFlags(dragFlags, swipeFlags);
-    }
-
-    /**
-     * Enable or disable drag temporarelly
+     * Enable or disable drag temporally
      * @param v True to enable, false otherwise
      */
     public void enableDrag(boolean v) {

@@ -23,9 +23,10 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.LongSparseArray;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.LongSparseArray;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.GestureDetector;
@@ -34,7 +35,9 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("unused")
@@ -52,6 +55,7 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
     private int choiceMode;
     private AdapterDataSetObserver adapterDataSetObserver;
     private Set<OnItemClickListener> onItemClickListeners = new HashSet<>();
+    private ItemTouchListener onItemTouchListener;
 
     public interface OnItemClickListener {
         void onItemClick(RecyclerView parent, View clickedView, int position);
@@ -61,18 +65,33 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
 
     public SmartRecycleView(Context context) {
         super(context);
+        init();
     }
 
     public SmartRecycleView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public SmartRecycleView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
     }
 
     private void init() {
         choiceMode = NONE;
+        onItemTouchListener = new ItemTouchListener();
+        super.addOnItemTouchListener(onItemTouchListener);
+    }
+
+    @Override
+    public void addOnItemTouchListener(OnItemTouchListener listener) {
+        onItemTouchListener.addOnItemTouchListener(listener);
+    }
+
+    @Override
+    public void removeOnItemTouchListener(OnItemTouchListener listener) {
+        onItemTouchListener.removeOnItemTouchListener(listener);
     }
 
     public void setAdapter(Adapter adapter) {
@@ -503,25 +522,44 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
 
         private GestureDetector gestureDetector;
         private boolean disallowedIntercept;
+        private List<OnItemTouchListener> wrapped = new ArrayList<>();
 
         public ItemTouchListener() {
             disallowedIntercept = false;
             this.gestureDetector = new GestureDetector(getContext(), this);
         }
 
+        public void addOnItemTouchListener(OnItemTouchListener l) {
+            if (l != null)
+                wrapped.add(l);
+        }
+
+        public void removeOnItemTouchListener(OnItemTouchListener l) {
+            if (l != null)
+                wrapped.remove(l);
+        }
+
         @Override
         public boolean onInterceptTouchEvent(RecyclerView recyclerView, MotionEvent motionEvent) {
-            if (!disallowedIntercept)
+            if (!disallowedIntercept) {
                 gestureDetector.onTouchEvent(motionEvent);
-            return false;
+            }
+            boolean intercept = false;
+            for (OnItemTouchListener w : wrapped)
+                intercept |= w.onInterceptTouchEvent(recyclerView, motionEvent);
+            return intercept;
         }
 
         @Override
         public void onTouchEvent(RecyclerView recyclerView, MotionEvent motionEvent) {
+            for (OnItemTouchListener w : wrapped)
+                w.onTouchEvent(recyclerView, motionEvent);
         }
 
         @Override
         public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+            for (OnItemTouchListener w : wrapped)
+                w.onRequestDisallowInterceptTouchEvent(disallowedIntercept);
             this.disallowedIntercept = disallowIntercept;
         }
 

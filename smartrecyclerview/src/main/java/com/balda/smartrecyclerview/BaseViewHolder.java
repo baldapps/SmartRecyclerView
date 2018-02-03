@@ -32,7 +32,7 @@ import com.balda.smartrecyclerview.touchhelper.ItemTouchHelperViewHolder;
  * and keep references of your views.
  */
 @SuppressWarnings("unused")
-public class BaseViewHolder extends RecyclerView.ViewHolder implements ItemTouchHelperViewHolder {
+public abstract class BaseViewHolder extends RecyclerView.ViewHolder implements ItemTouchHelperViewHolder {
 
     protected final RecyclerArrayAdapter adapter;
 
@@ -105,6 +105,13 @@ public class BaseViewHolder extends RecyclerView.ViewHolder implements ItemTouch
             itemView.setBackgroundColor(0);
     }
 
+    void bindViewHolder(int position) {
+        updateCheckedState(position);
+        onBind(position);
+    }
+
+    protected abstract void onBind(int position);
+
     protected void updateCheckedState(int position) {
         if (adapter.getCheckableList() != null) {
             final boolean isChecked = adapter.getCheckableList().isItemChecked(position);
@@ -113,12 +120,6 @@ public class BaseViewHolder extends RecyclerView.ViewHolder implements ItemTouch
             } else {
                 itemView.setActivated(isChecked);
             }
-        }
-    }
-
-    public void bindChoiceState(int position) {
-        if (adapter.getCheckableList() != null) {
-            updateCheckedState(position);
         }
     }
 

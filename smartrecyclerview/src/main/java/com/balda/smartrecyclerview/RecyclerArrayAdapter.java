@@ -218,14 +218,14 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
     }
 
     @Override
-    public void onBindViewHolder(VH holder, int position) {
-        holder.bindChoiceState(position);
+    public final void onBindViewHolder(VH holder, int position) {
+        holder.bindViewHolder(position);
     }
 
     @Override
-    public void onBindViewHolder(VH holder, int position, List<Object> payloads) {
+    public final void onBindViewHolder(VH holder, int position, List<Object> payloads) {
         super.onBindViewHolder(holder, position, payloads);
-        holder.bindChoiceState(position);
+        holder.bindViewHolder(position);
     }
 
     @Override
@@ -306,8 +306,8 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
      */
     protected class DiffCallback extends DiffUtil.Callback {
 
-        private final List<T> mOldList;
-        private final List<T> mNewList;
+        protected final List<T> mOldList;
+        protected final List<T> mNewList;
 
         public DiffCallback(List<T> oldCollection, List<T> collection) {
             this.mOldList = oldCollection;
