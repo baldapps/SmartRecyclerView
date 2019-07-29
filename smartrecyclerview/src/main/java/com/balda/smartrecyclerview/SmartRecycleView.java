@@ -21,12 +21,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.util.LongSparseArray;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.GestureDetector;
@@ -39,6 +34,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.collection.LongSparseArray;
+import androidx.recyclerview.widget.RecyclerView;
 
 @SuppressWarnings("unused")
 public class SmartRecycleView extends RecyclerView implements CheckableList {

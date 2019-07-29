@@ -17,8 +17,8 @@
  */
 package com.balda.smartrecyclerview.touchhelper;
 
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.ItemTouchHelper;
 
 @SuppressWarnings("unused")
 public class TouchHelperCallback extends ItemTouchHelper.SimpleCallback {

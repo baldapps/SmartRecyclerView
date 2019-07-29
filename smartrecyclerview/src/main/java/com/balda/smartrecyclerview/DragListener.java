@@ -17,7 +17,7 @@
  */
 package com.balda.smartrecyclerview;
 
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * The drag listener interface is used to be notified when
