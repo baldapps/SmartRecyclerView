@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Marco Stornelli
+ * Copyright 2019 Marco Stornelli
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -85,12 +85,12 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
     }
 
     @Override
-    public void addOnItemTouchListener(OnItemTouchListener listener) {
+    public void addOnItemTouchListener(@NonNull OnItemTouchListener listener) {
         onItemTouchListener.addOnItemTouchListener(listener);
     }
 
     @Override
-    public void removeOnItemTouchListener(OnItemTouchListener listener) {
+    public void removeOnItemTouchListener(@NonNull OnItemTouchListener listener) {
         onItemTouchListener.removeOnItemTouchListener(listener);
     }
 
@@ -164,7 +164,9 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
             }
             checkedItemCount = 0;
 
-            getAdapter().notifyItemRangeChanged(start, end - start + 1);
+            Adapter adapter = getAdapter();
+            if (adapter != null)
+                adapter.notifyItemRangeChanged(start, end - start + 1);
 
             if (choiceActionMode != null) {
                 choiceActionMode.finish();
@@ -173,7 +175,7 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
     }
 
     public void setItemChecked(int position, boolean value, boolean notifyChanged) {
-        if (choiceMode == NONE)
+        if (choiceMode == NONE || getAdapter() == null)
             return;
 
         // Start selection mode if needed. We don't need to if we're unchecking something.
@@ -275,8 +277,9 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
             checkedIdStates = savedState.checkedIdStates;
 
             if (checkedItemCount > 0) {
+                Adapter adapter = getAdapter();
                 // Empty adapter is given a chance to be populated before completeRestoreInstanceState()
-                if (getAdapter().getItemCount() > 0) {
+                if (adapter != null && adapter.getItemCount() > 0) {
                     confirmCheckedPositions();
                 }
                 if (getContext() instanceof Activity) {
@@ -292,7 +295,7 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
     }
 
     void completeRestoreInstanceState() {
-        if (checkedItemCount > 0) {
+        if (checkedItemCount > 0 && getAdapter() != null) {
             if (getAdapter().getItemCount() == 0) {
                 // Adapter was not populated, clear the selection
                 confirmCheckedPositions();
@@ -369,7 +372,7 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
     }
 
     void confirmCheckedPositions() {
-        if (checkedItemCount == 0) {
+        if (checkedItemCount == 0 || getAdapter() == null) {
             return;
         }
 
@@ -517,8 +520,7 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
             l.onItemLongClick(this, view, position);
     }
 
-    private class ItemTouchListener extends GestureDetector.SimpleOnGestureListener implements RecyclerView
-            .OnItemTouchListener {
+    private class ItemTouchListener extends GestureDetector.SimpleOnGestureListener implements RecyclerView.OnItemTouchListener {
 
         private GestureDetector gestureDetector;
         private boolean disallowedIntercept;
@@ -540,7 +542,7 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
         }
 
         @Override
-        public boolean onInterceptTouchEvent(RecyclerView recyclerView, MotionEvent motionEvent) {
+        public boolean onInterceptTouchEvent(@NonNull RecyclerView recyclerView, @NonNull MotionEvent motionEvent) {
             if (!disallowedIntercept) {
                 gestureDetector.onTouchEvent(motionEvent);
             }
@@ -551,7 +553,7 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
         }
 
         @Override
-        public void onTouchEvent(RecyclerView recyclerView, MotionEvent motionEvent) {
+        public void onTouchEvent(@NonNull RecyclerView recyclerView, @NonNull MotionEvent motionEvent) {
             for (OnItemTouchListener w : wrapped)
                 w.onTouchEvent(recyclerView, motionEvent);
         }
@@ -579,6 +581,8 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
 
             view.setPressed(false);
             int position = getChildAdapterPosition(view);
+            BaseViewHolder baseViewHolder = (BaseViewHolder) getChildViewHolder(view);
+            baseViewHolder.onLongClickListener(view);
             onItemClick(view, position);
             return true;
         }
@@ -589,6 +593,8 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
             if (view == null)
                 return;
             int position = getChildAdapterPosition(view);
+            BaseViewHolder baseViewHolder = (BaseViewHolder) getChildViewHolder(view);
+            baseViewHolder.onLongClickListener(view);
             onItemLongClick(view, position);
             view.setPressed(false);
         }

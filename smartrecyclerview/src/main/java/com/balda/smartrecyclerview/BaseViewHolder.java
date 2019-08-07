@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Marco Stornelli
+ * Copyright 2019 Marco Stornelli
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -19,13 +19,14 @@ package com.balda.smartrecyclerview;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
-import androidx.annotation.IdRes;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Checkable;
 
 import com.balda.smartrecyclerview.touchhelper.ItemTouchHelperViewHolder;
+
+import androidx.annotation.IdRes;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Base view holder class. Extend this class to customize the behavior
@@ -39,7 +40,6 @@ public abstract class BaseViewHolder extends RecyclerView.ViewHolder implements 
     public BaseViewHolder(RecyclerArrayAdapter adapter, View itemView) {
         super(itemView);
         this.adapter = adapter;
-        init();
     }
 
     public BaseViewHolder(RecyclerArrayAdapter recViewAdapter, View itemView, @IdRes int dragViewId) {
@@ -57,39 +57,29 @@ public abstract class BaseViewHolder extends RecyclerView.ViewHolder implements 
                 return false;
             }
         });
-        init();
     }
 
-    private void init() {
-        if (isChoiceModeActive() || isChoiceModeModal()) {
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (isChoiceModeActive()) {
-                        int position = getAdapterPosition();
-                        if (position != RecyclerView.NO_POSITION && adapter.getCheckableList() != null) {
-                            adapter.getCheckableList().toggleItemChecked(position, false);
-                            updateCheckedState(position);
-                        }
-                    }
-                }
-            });
+    void onClickListener(View view) {
+        if (isChoiceModeActive()) {
+            int position = getAdapterPosition();
+            if (position != RecyclerView.NO_POSITION && adapter.getCheckableList() != null) {
+                adapter.getCheckableList().toggleItemChecked(position, false);
+                updateCheckedState(position);
+            }
         }
-        if (isChoiceModeModal()) {
-            itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    if (adapter.getCheckableList() == null || isChoiceModeActive()) {
-                        return false;
-                    }
-                    int position = getAdapterPosition();
-                    if (position != RecyclerView.NO_POSITION) {
-                        adapter.getCheckableList().setItemChecked(position, true, false);
-                        updateCheckedState(position);
-                    }
-                    return true;
-                }
-            });
+    }
+
+    void onLongClickListener(View view) {
+        if (!isChoiceModeModal())
+            return;
+
+        if (adapter.getCheckableList() == null || isChoiceModeActive()) {
+            return;
+        }
+        int position = getAdapterPosition();
+        if (position != RecyclerView.NO_POSITION) {
+            adapter.getCheckableList().setItemChecked(position, true, false);
+            updateCheckedState(position);
         }
     }
 
