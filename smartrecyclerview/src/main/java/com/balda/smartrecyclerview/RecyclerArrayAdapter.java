@@ -18,10 +18,6 @@
 package com.balda.smartrecyclerview;
 
 import android.content.Context;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.RecyclerView;
 import android.widget.Filter;
 import android.widget.Filterable;
 
@@ -33,6 +29,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Base recycler view adapter
@@ -84,13 +85,13 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
     }
 
     @Override
-    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
         checkableList = (CheckableList) recyclerView;
     }
 
     @Override
-    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
         super.onDetachedFromRecyclerView(recyclerView);
         checkableList = null;
     }
@@ -223,7 +224,7 @@ public abstract class RecyclerArrayAdapter<T, VH extends BaseViewHolder> extends
     }
 
     @Override
-    public final void onBindViewHolder(VH holder, int position, List<Object> payloads) {
+    public final void onBindViewHolder(@NonNull VH holder, int position, @NonNull List<Object> payloads) {
         super.onBindViewHolder(holder, position, payloads);
         holder.bindViewHolder(position);
     }
