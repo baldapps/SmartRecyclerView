@@ -3,7 +3,8 @@
 Smart Recycler View is an android library project to help developers to use the recycler view implementation in an easy way.
 
 ## Dependencies
-* com.android.support:recyclerview-v7 (version 27.0.2 or above)
+* androidx.recyclerview:recyclerview:1.1.0-beta01
+* androidx.legacy:legacy-support-core-utils:1.0.0
 
 ## Set up Instructions
 Set up the project dependencies. To use this library in your project:
@@ -16,7 +17,7 @@ git clone https://github.com/baldapps/SmartRecyclerView.git
  * In the root of your application's project edit the file "settings.gradle" and add the following lines:
 ```shell
 include ':smartrecyclerview'
-project(':smartrecyclerview').projectDir = new File('../smartrecyclerview/')
+project(':smartrecyclerview').projectDir = new File('../Smartrecyclerview/smartrecyclerview/')
 ```
  * In your application's main module (usually called "app"), edit your build.gradle to add a new dependency:
 ```shell
