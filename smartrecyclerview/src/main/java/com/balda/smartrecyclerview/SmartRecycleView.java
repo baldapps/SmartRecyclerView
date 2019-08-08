@@ -582,7 +582,7 @@ public class SmartRecycleView extends RecyclerView implements CheckableList {
             view.setPressed(false);
             int position = getChildAdapterPosition(view);
             BaseViewHolder baseViewHolder = (BaseViewHolder) getChildViewHolder(view);
-            baseViewHolder.onLongClickListener(view);
+            baseViewHolder.onClickListener(view);
             onItemClick(view, position);
             return true;
         }
